@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 БЕЗУМНЫЙ МУЛЬТИПЛЕЕРНЫЙ ЧАТ + КАЛЬКУЛЯТОР + ДРАГ + РЕВЕРБ 🔥</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; padding: 20px; overflow: hidden;
+            transition: background 0.5s;
+        }
+        body.party-mode {
+            animation: partyBackground 0.5s infinite;
+        }
+        @keyframes partyBackground {
+            0% { background: linear-gradient(135deg, #ff0000, #ff00ff); }
+            25% { background: linear-gradient(135deg, #00ff00, #00ffff); }
+            50% { background: linear-gradient(135deg, #0000ff, #ff00ff); }
+            75% { background: linear-gradient(135deg, #ffff00, #ff0000); }
+            100% { background: linear-gradient(135deg, #ff0000, #ff00ff); }
+        }
+
+        /* === СТАТУС И ПОЛЬЗОВАТЕЛИ === */
+        .connection-status {
+            position: fixed; top: 20px; left: 20px; padding: 10px 20px;
+            background: rgba(0,0,0,0.7); border-radius: 25px; color: white;
+            font-size: 14px; z-index: 1000; display: flex; align-items: center; gap: 10px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+        }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #2ecc71; animation: pulse 2s infinite; }
+        .status-dot.disconnected { background: #e74c3c; animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .users-panel {
+            position: fixed; top: 70px; left: 20px; width: 220px;
+            background: rgba(0,0,0,0.7); border-radius: 15px; color: white;
+            z-index: 1000; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+            max-height: 300px; overflow-y: auto;
+        }
+        .users-panel h3 { padding: 15px; font-size: 16px; color: #4a90e2; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .user-list { display: flex; flex-direction: column; }
+        .user-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 15px;
+            background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s;
+        }
+        .user-item:hover { background: rgba(255,255,255,0.15); transform: translateX(5px); }
+        .user-item.active { background: rgba(74,144,226,0.3); border-left: 3px solid #4a90e2; }
+        .user-dot { width: 10px; height: 10px; border-radius: 50%; animation: userPulse 2s infinite; }
+        @keyframes userPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .user-name { flex: 1; font-size: 13px; }
+        .user-activity { font-size: 10px; color: #888; }
+
+        /* === КАЛЬКУЛЯТОР === */
+        .calculator {
+            width: 260px; margin: 80px auto 20px; background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px); padding: 20px; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+            position: relative; z-index: 5;
+            transition: all 0.3s;
+        }
+        .calculator.party-mode {
+            animation: calcCrazy 0.5s infinite;
+        }
+        @keyframes calcCrazy {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(2deg) scale(1.05); }
+            50% { transform: rotate(-2deg) scale(1.1); }
+            75% { transform: rotate(2deg) scale(1.05); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        .display {
+            padding: 20px 15px; background: rgba(0,0,0,0.3); text-align: right;
+            font-size: 32px; font-weight: bold; border-radius: 12px; margin-bottom: 15px;
+            min-height: 70px; color: #fff; text-shadow: 0 0 10px rgba(74,144,226,0.8);
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+        .display::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+            pointer-events: none;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            20%, 100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .display.wobble { animation: crazyWobble 0.15s ease-out; }
+        @keyframes crazyWobble {
+            0% { transform: scale(1); filter: hue-rotate(0deg); }
+            50% { transform: scale(1.2) rotate(5deg); filter: hue-rotate(180deg); }
+            100% { transform: scale(1); filter: hue-rotate(0deg); }
+        }
+
+        .display.glow {
+            animation: glowPulse 0.5s;
+        }
+        @keyframes glowPulse {
+            0% { text-shadow: 0 0 10px #4a90e2; }
+            50% { text-shadow: 0 0 30px #ff00ff, 0 0 50px #00ffff; }
+            100% { text-shadow: 0 0 10px #4a90e2; }
+        }
+
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        button {
+            width: 100%; height: 55px; border: none; border-radius: 12px;
+            background: linear-gradient(145deg, #4a90e2, #357abd); color: white;
+            font-size: 20px; cursor: pointer; transition: 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        button:active::after {
+            width: 100px;
+            height: 100px;
+        }
+        button:hover { transform: translateY(-2px) scale(1.05); filter: brightness(1.2); }
+        button:active { transform: translateY(2px) scale(0.95); }
+        button.operator { background: linear-gradient(145deg, #2ecc71, #27ae60); }
+        button.equals { background: linear-gradient(145deg, #e74c3c, #c0392b); grid-column: span 2; }
+        button.clear { background: linear-gradient(145deg, #95a5a6, #7f8c8d); grid-column: span 4; }
+
+        /* Индикатор кто нажал */
+        .user-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: indicatorPulse 1s infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes indicatorPulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* История вычислений */
+        .calc-history {
+            position: fixed;
+            top: 400px;
+            left: 20px;
+            width: 220px;
+            max-height: 200px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 10px;
+            color: white;
+            font-size: 12px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 100;
+        }
+        .calc-history h4 { color: #4a90e2; margin-bottom: 10px; }
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            animation: slideIn 0.3s;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .history-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* === ПЕРЕТАСКИВАЕМЫЙ АУДИО-ПЛЕЕР === */
+        .audio-player {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 340px; padding: 0;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(15px);
+            border-radius: 30px;
+            box-shadow: 0 15px 60px rgba(0,0,0,0.5), 0 0 80px rgba(74,144,226,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 50;
+            transition: box-shadow 0.1s, filter 0.1s;
+            display: flex; flex-direction: column;
+        }
+        .audio-player.party-mode {
+            animation: playerCrazy 0.3s infinite;
+        }
+        @keyframes playerCrazy {
+            0% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .player-header {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 30px 30px 0 0;
+            cursor: grab;
+            display: flex; justify-content: space-between; align-items: center;
+            user-select: none;
+        }
+        .player-header:active { cursor: grabbing; }
+        .player-title { font-weight: bold; color: #4a90e2; font-size: 14px; letter-spacing: 1px; }
+        .drag-icon { color: rgba(255,255,255,0.5); font-size: 12px; }
+
+        .player-content { padding: 20px; }
+
+        canvas#osc {
+            background: rgba(0,0,0,0.4); border-radius: 15px;
+            margin: 0 0 20px; width: 100%; height: 120px;
+            border: 2px solid rgba(74,144,226,0.5);
+            pointer-events: none;
+        }
+
+        .controls { width: 100%; display: flex; flex-direction: column; gap: 15px; }
+        .control-group label { font-size: 12px; color: #ccc; display: flex; justify-content: space-between; }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 6px;
+            background: rgba(255,255,255,0.15); border-radius: 3px; outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+            background: #4a90e2; cursor: pointer; border: 2px solid #fff;
+            box-shadow: 0 0 10px rgba(74,144,226,0.8);
+            transition: all 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ff00ff;
+        }
+        input[type="range"].is-playing::-webkit-slider-thumb {
+            animation: rainbowPulse 1s infinite; background: #2ecc71;
+        }
+        @keyframes rainbowPulse {
+            0% { box-shadow: 0 0 10px #2ecc71; transform: scale(1); }
+            50% { box-shadow: 0 0 25px #ff00ff, 0 0 50px #00ffff; transform: scale(1.3); }
+            100% { box-shadow: 0 0 10px #2ecc71; transform: scale(1); }
+        }
+
+        /* Стиль для реверба */
+        #reverb::-webkit-slider-thumb {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+        }
+
+        .playback-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+        .playback-controls button {
+            flex: 1; height: 40px; font-size: 14px; border-radius: 20px;
+            background: linear-gradient(145deg, #6c5ce7, #a29bfe);
+            position: relative;
+            overflow: hidden;
+        }
+        .playback-controls button::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff, #ff0000);
+            background-size: 400%;
+            border-radius: 22px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+        .playback-controls button:hover::before {
+            opacity: 1;
+            animation: borderRotate 3s linear infinite;
+        }
+        @keyframes borderRotate {
+            0% { background-position: 0 0; }
+            100% { background-position: 400% 0; }
+        }
+
+        /* === ЧАТ ВИДЖЕТ === */
+        .chat-widget {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 350px; height: 500px;
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s, opacity 0.3s, height 0.3s;
+        }
+        .chat-widget.minimized {
+            height: 60px; width: 200px;
+            cursor: pointer;
+        }
+        .chat-widget.minimized .chat-messages,
+        .chat-widget.minimized .chat-input-area { display: none; }
+        .chat-widget.party-mode {
+            animation: chatCrazy 0.5s infinite;
+        }
+        @keyframes chatCrazy {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(-1deg); }
+            50% { transform: translateY(0) rotate(1deg); }
+            75% { transform: translateY(5px) rotate(-1deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        .chat-header {
+            padding: 15px; background: rgba(74,144,226,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
+        }
+        .chat-tabs { display: flex; gap: 10px; margin-top: 5px; }
+        .chat-tab {
+            font-size: 12px; padding: 5px 10px; border-radius: 10px;
+            background: rgba(255,255,255,0.1); cursor: pointer; color: #aaa;
+            transition: all 0.2s;
+        }
+        .chat-tab:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.2);
+        }
+        .chat-tab.active { background: #4a90e2; color: white; animation: tabPulse 2s infinite; }
+        @keyframes tabPulse {
+            0%, 100% { background: #4a90e2; }
+            50% { background: #ff00ff; }
+        }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .message {
+            max-width: 80%; padding: 8px 12px; border-radius: 12px;
+            font-size: 13px; line-height: 1.4; position: relative;
+            animation: messagePop 0.3s ease-out;
+            transition: all 0.2s;
+        }
+        .message:hover {
+            transform: scale(1.02) translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        @keyframes messagePop {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            70% { transform: scale(1.1) translateY(0); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .message.global {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.1);
+            border-bottom-left-radius: 2px;
+            border-left: 3px solid #4a90e2;
+        }
+        .message.private {
+            align-self: flex-end;
+            background: rgba(74,144,226,0.3);
+            border-bottom-right-radius: 2px;
+            border-right: 3px solid #ff00ff;
+        }
+        .message .sender {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 2px;
+            display: block;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .message .time {
+            font-size: 9px;
+            opacity: 0.5;
+            float: right;
+            margin-left: 10px;
+            margin-top: 4px;
+        }
+
+        .chat-input-area {
+            padding: 15px; background: rgba(0,0,0,0.2);
+            display: flex; gap: 10px;
+        }
+        .chat-input-area input {
+            flex: 1; padding: 10px; border-radius: 20px; border: none;
+            background: rgba(255,255,255,0.1); color: white; outline: none;
+            transition: all 0.2s;
+        }
+        .chat-input-area input:focus {
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 0 20px rgba(74,144,226,0.5);
+        }
+        .chat-input-area button {
+            width: 40px; height: 40px; border-radius: 50%; border: none;
+            background: #4a90e2; color: white; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chat-input-area button:hover {
+            transform: scale(1.1) rotate(90deg);
+            background: #ff00ff;
+        }
+
+        .party-btn {
+            position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px;
+            border-radius: 50%; background: linear-gradient(145deg, #ff0080, #8000ff);
+            border: none; color: white; font-size: 24px; cursor: pointer;
+            box-shadow: 0 5px 30px rgba(255,0,128,0.6); z-index: 90;
+            animation: partyBtnPulse 1.5s infinite;
+            transition: all 0.3s;
+        }
+        .party-btn:hover {
+            transform: scale(1.2) rotate(180deg);
+        }
+        @keyframes partyBtnPulse {
+            0% { box-shadow: 0 5px 30px rgba(255,0,128,0.6); }
+            50% { box-shadow: 0 5px 60px rgba(128,0,255,0.9), 0 5px 90px rgba(0,255,255,0.9); }
+            100% { box-shadow: 0 5px 30px rgba(255,0,128,0.6); }
+        }
+
+        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #4a90e2;
+            border-radius: 50%;
+            animation: floatParticle 3s infinite;
+            opacity: 0;
+        }
+        .particle.party {
+            width: 10px;
+            height: 10px;
+            animation: partyParticle 2s infinite;
+        }
+        @keyframes partyParticle {
+            0% { transform: translateY(100vh) scale(1); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(3); opacity: 0; }
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+
+        .notification {
+            position: fixed; top: 20px; right: 20px; padding: 10px 20px;
+            background: rgba(0,0,0,0.8); border-radius: 10px; color: white;
+            font-size: 13px; z-index: 2000; animation: notificationSlide 0.3s;
+            border-left: 4px solid #4a90e2;
+            backdrop-filter: blur(10px);
+        }
+        @keyframes notificationSlide {
+            0% { transform: translateX(100px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Эффект нажатия на калькуляторе */
+        .button-press-effect {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            pointer-events: none;
+            animation: pressRipple 0.5s ease-out;
+            z-index: 9999;
+        }
+        @keyframes pressRipple {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="connection-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Подключение...</span>
+        <span id="userCount">(0)</span>
+    </div>
+
+    <div class="users-panel">
+        <h3>👥 Онлайн <span id="onlineCount">0</span></h3>
+        <div class="user-list" id="userList"></div>
+    </div>
+
+    <!-- История вычислений -->
+    <div class="calc-history" id="calcHistory">
+        <h4>📝 История вычислений</h4>
+        <div id="historyList"></div>
+    </div>
+
+    <div class="calculator" id="calculator">
+        <div class="display" id="display" data-text="0">0</div>
+        <div class="buttons">
+            <button onclick="sendInput('7')" class="calc-btn">7</button>
+            <button onclick="sendInput('8')" class="calc-btn">8</button>
+            <button onclick="sendInput('9')" class="calc-btn">9</button>
+            <button class="operator calc-btn" onclick="sendInput('/')">÷</button>
+
+            <button onclick="sendInput('4')" class="calc-btn">4</button>
+            <button onclick="sendInput('5')" class="calc-btn">5</button>
+            <button onclick="sendInput('6')" class="calc-btn">6</button>
+            <button class="operator calc-btn" onclick="sendInput('*')">×</button>
+
+            <button onclick="sendInput('1')" class="calc-btn">1</button>
+            <button onclick="sendInput('2')" class="calc-btn">2</button>
+            <button onclick="sendInput('3')" class="calc-btn">3</button>
+            <button class="operator calc-btn" onclick="sendInput('-')">−</button>
+
+            <button onclick="sendInput('0')" class="calc-btn">0</button>
+            <button onclick="sendInput('.')" class="calc-btn">.</button>
+            <button class="equals calc-btn" onclick="calculate()">=</button>
+            <button class="operator calc-btn" onclick="sendInput('+')">+</button>
+
+            <button class="clear calc-btn" onclick="clearAll()" style="grid-column: span 4;">🗑 CLEAR</button>
+        </div>
+    </div>
+
+    <div class="audio-player" id="playerContainer">
+        <div class="player-header" id="playerHeader">
+            <span class="player-title">🎵 MEGA PLAYER + REVERB</span>
+            <span class="drag-icon">⠿⠿⠿</span>
+        </div>
+
+        <div class="player-content">
+            <canvas id="osc" width="320" height="120"></canvas>
+
+            <div class="playback-controls">
+                <button id="playBtn">🔊 PLAY</button>
+                <button id="pauseBtn">⏸ PAUSE</button>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>⏱ Прогресс <span id="progressValue">0%</span></label>
+                    <input type="range" id="progress" min="0" max="100" value="0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>🔈 Громкость <span id="volumeValue">50%</span></label>
+                    <input type="range" id="volume" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                    <label>⚡ Скорость <span id="speedValue">1.0x</span></label>
+                    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+                </div>
+                <div class="control-group">
+                    <label>🎵 Тональность <span id="pitchValue">0</span></label>
+                    <input type="range" id="pitch" min="-1200" max="1200" step="100" value="0">
+                </div>
+                <div class="control-group">
+                    <label>🌀 Реверберация <span id="reverbValue">0%</span></label>
+                    <input type="range" id="reverb" min="0" max="100" value="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-widget" id="chatWidget">
+        <div class="chat-header" onclick="toggleChat()">
+            <div>
+                <strong>💬 Чат</strong>
+                <div class="chat-tabs">
+                    <span class="chat-tab active" id="tabGlobal" onclick="switchChatTab('global', event)">Общий</span>
+                    <span class="chat-tab" id="tabPrivate" onclick="switchChatTab('private', event)">Личный</span>
+                </div>
+            </div>
+            <span style="font-size: 20px;">−</span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Напишите сообщение..." onkeypress="handleChatKey(event)">
+            <button onclick="sendChatMessage()">➤</button>
+        </div>
+    </div>
+
+    <audio id="myTrack" src="music.mp3" crossorigin="anonymous"></audio>
+    <button class="party-btn" id="partyBtn" title="РЕЖИМ ВЕЧЕРИНКИ!">🎉</button>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // === ИНИЦИАЛИЗАЦИЯ ===
+        const socket = io();
+        const display = document.getElementById("display");
+        const audio = document.getElementById('myTrack');
+        const playerContainer = document.getElementById('playerContainer');
+        const playerHeader = document.getElementById('playerHeader');
+        const canvas = document.getElementById('osc');
+        const canvasCtx = canvas.getContext('2d');
+        const chatWidget = document.getElementById('chatWidget');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const userList = document.getElementById('userList');
+        const historyList = document.getElementById('historyList');
+        const calculator = document.getElementById('calculator');
+
+        let audioContext, analyser, source, dataArray;
+        let reverbNode, wetGain, dryGain;
+        let hue = 0, isPartyMode = false, isRemoteUpdate = false;
+        let currentChatTab = 'global';
+        let currentPrivateTarget = null;
+        let myUserId = null;
+        let lastCalculatorUser = null;
+        let calcHistory = [];
+        const MAX_HISTORY = 20;
+
+        audio.preservesPitch = false;
+
+        // === DRAG AND DROP ===
+        let isDragging = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+
+        playerHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const rect = playerContainer.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+
+            playerContainer.style.transform = 'none';
+            playerContainer.style.left = rect.left + 'px';
+            playerContainer.style.top = rect.top + 'px';
+            playerContainer.style.zIndex = 1000;
+            playerContainer.style.transition = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            let newX = e.clientX - dragOffsetX;
+            let newY = e.clientY - dragOffsetY;
+
+            const maxX = window.innerWidth - playerContainer.offsetWidth;
+            const maxY = window.innerHeight - playerContainer.offsetHeight;
+
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            playerContainer.style.left = newX + 'px';
+            playerContainer.style.top = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                playerContainer.style.zIndex = 50;
+                playerContainer.style.transition = 'box-shadow 0.1s, filter 0.1s';
+            }
+        });
+
+        // === ЧАТ ЛОГИКА ===
+        function toggleChat() {
+            chatWidget.classList.toggle('minimized');
+        }
+
+        function switchChatTab(tab, event) {
+            event.stopPropagation();
+            currentChatTab = tab;
+            document.getElementById('tabGlobal').classList.toggle('active', tab === 'global');
+            document.getElementById('tabPrivate').classList.toggle('active', tab === 'private');
+
+            chatMessages.innerHTML = '';
+            if (tab === 'private') {
+                chatInput.placeholder = currentPrivateTarget ? 'Личное сообщение...' : 'Выберите пользователя слева 👈';
+                chatInput.disabled = !currentPrivateTarget;
+            } else {
+                chatInput.placeholder = 'Сообщение всем...';
+                chatInput.disabled = false;
+            }
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            if (currentChatTab === 'global') {
+                socket.emit('chat:global', text);
+            } else if (currentChatTab === 'private' && currentPrivateTarget) {
+                socket.emit('chat:private', { to: currentPrivateTarget, message: text });
+            }
+
+            chatInput.value = '';
+        }
+
+        function addMessageToChat(data, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+
+            const time = new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            let senderHtml = '';
+            if (type === 'global' || (type === 'private' && !data.isMe)) {
+                senderHtml = `<span class="sender" style="color: ${data.fromColor || data.color}">${data.fromName || data.name}</span>`;
+            }
+
+            div.innerHTML = `
+                ${senderHtml}
+                ${data.message}
+                <span class="time">${time}</span>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Эффект для новых сообщений
+            div.style.animation = 'none';
+            div.offsetHeight;
+            div.style.animation = 'messagePop 0.3s ease-out';
+        }
+
+        // === КАЛЬКУЛЯТОР С ПОЛНОЙ СИНХРОНИЗАЦИЕЙ ===
+        function sendInput(value) {
+            socket.emit('calc:input', value);
+            createPressEffect(event);
+            triggerEffect();
+        }
+
+        function calculate() {
+            socket.emit('calc:calculate', display.textContent);
+            createPressEffect(event);
+            triggerEffect(true);
+        }
+
+        function clearAll() {
+            socket.emit('calc:clear');
+            createPressEffect(event);
+            triggerEffect();
+        }
+
+        // Создание эффекта нажатия
+        function createPressEffect(e) {
+            if (!e) return;
+            const effect = document.createElement('div');
+            effect.className = 'button-press-effect';
+            effect.style.left = (e.clientX - 25) + 'px';
+            effect.style.top = (e.clientY - 25) + 'px';
+            effect.style.background = `radial-gradient(circle, hsl(${Math.random() * 360}, 100%, 70%) 0%, transparent 70%)`;
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), 500);
+        }
+
+        // Добавление в историю
+        function addToHistory(expression, result, userId, userName, userColor) {
+            calcHistory.unshift({
+                expression,
+                result,
+                userId,
+                userName,
+                userColor,
+                timestamp: Date.now()
+            });
+
+            if (calcHistory.length > MAX_HISTORY) {
+                calcHistory.pop();
+            }
+
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+            calcHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-dot" style="background: ${item.userColor}"></div>
+                    <div style="flex:1">
+                        <span style="color: ${item.userColor}">${item.userName}:</span>
+                        ${item.expression} = <strong>${item.result}</strong>
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        // Обновление индикатора пользователя
+        function showUserIndicator(userId, color) {
+            const indicator = document.createElement('div');
+            indicator.className = 'user-indicator';
+            indicator.style.background = color;
+            indicator.style.left = '50%';
+            indicator.style.top = '50%';
+            calculator.style.position = 'relative';
+            calculator.appendChild(indicator);
+            setTimeout(() => indicator.remove(), 1000);
+        }
+
+        // === АУДИО КОНТЕКСТ ===
+        async function initAudioContext() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+
+            source = audioContext.createMediaElementSource(audio);
+
+            // Создаем узлы для реверба
+            dryGain = audioContext.createGain();
+            wetGain = audioContext.createGain();
+            reverbNode = audioContext.createConvolver();
+
+            // Создаем импульс (имитация реверберации комнаты)
+            const sampleRate = audioContext.sampleRate;
+            const length = sampleRate * 2; // 2 секунды реверба
+            const impulse = audioContext.createBuffer(2, length, sampleRate);
+
+            // Заполняем импульс затухающим шумом
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < length; i++) {
+                    const decay = Math.exp(-i / (sampleRate * 0.5));
+                    channelData[i] = (Math.random() * 2 - 1) * decay;
+                }
+            }
+
+            reverbNode.buffer = impulse;
+
+            // Подключаем: source -> dry/wet -> analyser
+            source.connect(dryGain);
+            source.connect(reverbNode);
+            reverbNode.connect(wetGain);
+            dryGain.connect(analyser);
+            wetGain.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            // Начальные значения
+            dryGain.gain.value = 1;
+            wetGain.gain.value = 0;
+
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            drawOscilloscope();
+            animatePulse();
+        }
+
+        // === СОКЕТ СОБЫТИЯ ===
+        socket.on('connect', () => {
+            document.getElementById('statusDot').className = 'status-dot';
+            document.getElementById('statusText').textContent = 'Подключено';
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('statusDot').className = 'status-dot disconnected';
+            document.getElementById('statusText').textContent = 'Отключено';
+        });
+
+        socket.on('sync:full', (data) => {
+            myUserId = socket.id;
+            display.textContent = data.state.display;
+
+            // Синхронизация аудио
+            if (data.state.audio) {
+                audio.volume = data.state.audio.volume / 100;
+                document.getElementById('volume').value = data.state.audio.volume;
+                document.getElementById('volumeValue').textContent = data.state.audio.volume + '%';
+
+                audio.playbackRate = data.state.audio.speed;
+                document.getElementById('speed').value = data.state.audio.speed;
+                document.getElementById('speedValue').textContent = data.state.audio.speed + 'x';
+
+                document.getElementById('pitch').value = data.state.audio.pitch;
+                document.getElementById('pitchValue').textContent = data.state.audio.pitch;
+
+                // Реверберация
+                if (data.state.audio.reverb !== undefined) {
+                    document.getElementById('reverb').value = data.state.audio.reverb;
+                    document.getElementById('reverbValue').textContent = data.state.audio.reverb + '%';
+                    if (dryGain && wetGain) {
+                        dryGain.gain.value = 1 - (data.state.audio.reverb / 100);
+                        wetGain.gain.value = data.state.audio.reverb / 100;
+                    }
+                }
+
+                if (data.state.audio.isPlaying) {
+                    audio.currentTime = data.state.audio.currentTime;
+                    audio.play().catch(() => {});
+                }
+            }
+
+            // Синхронизация режима вечеринки
+            if (data.state.partyMode) {
+                isPartyMode = true;
+                document.body.classList.add('party-mode');
+                calculator.classList.add('party-mode');
+                playerContainer.classList.add('party-mode');
+                chatWidget.classList.add('party-mode');
+            }
+
+            updateUsersList(data.users);
+            document.getElementById('onlineCount').textContent = Object.keys(data.users).length;
+            document.getElementById('userCount').textContent = `(${Object.keys(data.users).length})`;
+        });
+
+        socket.on('user:joined', (data) => {
+            updateUsersList(data.users);
+            document.getElementById('onlineCount').textContent = Object.keys(data.users).length;
+            document.getElementById('userCount').textContent = `(${Object.keys(data.users).length})`;
+            showNotification(`🎉 ${data.name} подключился к вечеринке!`);
+
+            // Эффект при подключении
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => createParticle(true), i * 100);
+            }
+        });
+
+        socket.on('user:left', (data) => {
+            updateUsersList(data.users);
+            document.getElementById('onlineCount').textContent = Object.keys(data.users).length;
+            document.getElementById('userCount').textContent = `(${Object.keys(data.users).length})`;
+
+            if (currentPrivateTarget === data.userId) {
+                currentPrivateTarget = null;
+                chatInput.disabled = true;
+                chatInput.placeholder = 'Пользователь отключился';
+            }
+        });
+
+        // === КАЛЬКУЛЯТОР СОБЫТИЯ ===
+        socket.on('calc:update', (data) => {
+            isRemoteUpdate = true;
+            display.textContent = data.display;
+
+            // Показываем кто нажал
+            if (data.userId !== myUserId) {
+                showUserIndicator(data.userId, data.color);
+
+                // Вибрация если есть
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }
+
+            triggerEffect(data.isResult);
+            setTimeout(() => isRemoteUpdate = false, 100);
+        });
+
+        socket.on('calc:result', (data) => {
+            // Добавляем в историю
+            addToHistory(data.expression, data.result, data.userId, data.userName, data.userColor);
+
+            // Эффект при результате
+            display.classList.add('glow');
+            setTimeout(() => display.classList.remove('glow'), 500);
+
+            // Создаем фейерверк если результат красивый
+            if (data.result === '42' || data.result === '1337' || data.result.includes('0')) {
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => createParticle(true), i * 50);
+                }
+            }
+        });
+
+        // === ЧАТ СОБЫТИЯ ===
+        socket.on('chat:global', (data) => {
+            if (currentChatTab === 'global') {
+                addMessageToChat(data, 'global');
+            } else {
+                showNotification(`📢 ${data.name}: ${data.message}`);
+            }
+
+            // Эффект для своего сообщения
+            if (data.userId === myUserId) {
+                chatInput.style.animation = 'none';
+                chatInput.offsetHeight;
+                chatInput.style.animation = 'glowPulse 0.5s';
+            }
+        });
+
+        socket.on('chat:private', (data) => {
+            if (currentChatTab === 'private' && (data.from === currentPrivateTarget || data.isMe)) {
+                addMessageToChat(data, 'private');
+            } else if (!data.isMe) {
+                showNotification(`🔒 Личное от ${data.fromName}`);
+
+                // Мигаем вкладкой
+                const tab = document.getElementById('tabPrivate');
+                tab.style.animation = 'none';
+                tab.offsetHeight;
+                tab.style.animation = 'tabPulse 1s infinite';
+            }
+        });
+
+        // === АУДИО ===
+        socket.on('audio:sync', (data) => {
+            if (data.userId === socket.id) return;
+            isRemoteUpdate = true;
+
+            if (data.action === 'play') {
+                audio.currentTime = data.currentTime;
+                audio.play();
+                showNotification(`🎵 ${data.userName} запустил музыку`);
+            }
+            if (data.action === 'pause') {
+                audio.pause();
+                showNotification(`⏸ ${data.userName} поставил на паузу`);
+            }
+            if (data.action === 'volume') {
+                audio.volume = data.volume/100;
+                document.getElementById('volume').value = data.volume;
+                document.getElementById('volumeValue').textContent = data.volume + '%';
+            }
+            if (data.action === 'speed') {
+                audio.playbackRate = data.speed;
+                document.getElementById('speed').value = data.speed;
+                document.getElementById('speedValue').textContent = data.speed + 'x';
+            }
+            if (data.action === 'pitch') {
+                document.getElementById('pitch').value = data.pitch;
+                document.getElementById('pitchValue').textContent = data.pitch;
+                if(source) source.detune.value = data.pitch;
+            }
+            if (data.action === 'progress') {
+                document.getElementById('progress').value = (data.currentTime / audio.duration) * 100;
+                document.getElementById('progressValue').textContent = Math.round((data.currentTime / audio.duration) * 100) + '%';
+            }
+            if (data.action === 'reverb') {
+                document.getElementById('reverb').value = data.reverb;
+                document.getElementById('reverbValue').textContent = data.reverb + '%';
+                if (dryGain && wetGain) {
+                    dryGain.gain.value = 1 - (data.reverb / 100);
+                    wetGain.gain.value = data.reverb / 100;
+                }
+            }
+
+            setTimeout(() => isRemoteUpdate = false, 100);
+        });
+
+        // === РЕЖИМ ВЕЧЕРИНКИ ===
+        socket.on('party:sync', (data) => {
+            isPartyMode = data.isParty;
+
+            if (isPartyMode) {
+                document.body.classList.add('party-mode');
+                calculator.classList.add('party-mode');
+                playerContainer.classList.add('party-mode');
+                chatWidget.classList.add('party-mode');
+                showNotification(`🎉 ${data.userName} АКТИВИРОВАЛ РЕЖИМ ВЕЧЕРИНКИ! 🎉`);
+
+                // Сумасшедшие частицы
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => createParticle(true), i * 20);
+                }
+            } else {
+                document.body.classList.remove('party-mode');
+                calculator.classList.remove('party-mode');
+                playerContainer.classList.remove('party-mode');
+                chatWidget.classList.remove('party-mode');
+            }
+        });
+
+        // === АУДИО КОНТРОЛЛЫ ===
+        document.getElementById('playBtn').onclick = async () => {
+            await initAudioContext();
+            audio.play();
+            socket.emit('audio:play', { currentTime: audio.currentTime });
+            createPressEffect(event);
+        };
+
+        document.getElementById('pauseBtn').onclick = () => {
+            audio.pause();
+            socket.emit('audio:pause');
+            createPressEffect(event);
+        };
+
+        // Прогресс
+        document.getElementById('progress').oninput = (e) => {
+            if (isRemoteUpdate) return;
+            const val = parseFloat(e.target.value);
+            const time = (val / 100) * audio.duration;
+            audio.currentTime = time;
+            socket.emit('audio:progress', time);
+            document.getElementById('progressValue').textContent = val + '%';
+        };
+
+        // Громкость
+        document.getElementById('volume').oninput = (e) => {
+            if (isRemoteUpdate) return;
+            const val = parseFloat(e.target.value);
+            audio.volume = val / 100;
+            socket.emit('audio:volume', val);
+            document.getElementById('volumeValue').textContent = val + '%';
+        };
+
+        // Скорость
+        document.getElementById('speed').oninput = (e) => {
+            if (isRemoteUpdate) return;
+            const val = parseFloat(e.target.value);
+            audio.playbackRate = val;
+            socket.emit('audio:speed', val);
+            document.getElementById('speedValue').textContent = val + 'x';
+        };
+
+        // Тональность
+        document.getElementById('pitch').oninput = (e) => {
+            if (isRemoteUpdate) return;
+            const val = parseFloat(e.target.value);
+            if(source) source.detune.value = val;
+            socket.emit('audio:pitch', val);
+            document.getElementById('pitchValue').textContent = val;
+        };
+
+        // Реверберация
+        document.getElementById('reverb').oninput = (e) => {
+            if (isRemoteUpdate) return;
+            const val = parseFloat(e.target.value) / 100;
+
+            if (dryGain && wetGain) {
+                dryGain.gain.value = 1 - val;
+                wetGain.gain.value = val;
+            }
+
+            document.getElementById('reverbValue').textContent = Math.round(val * 100) + '%';
+            socket.emit('audio:reverb', val * 100);
+        };
+
+        // Обновление прогресса
+        audio.addEventListener('timeupdate', () => {
+            if (isRemoteUpdate) return;
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progress').value = percent;
+                document.getElementById('progressValue').textContent = Math.round(percent) + '%';
+                socket.emit('audio:progress', audio.currentTime);
+            }
+        });
+
+        // === РЕЖИМ ВЕЧЕРИНКИ ===
+        document.getElementById('partyBtn').onclick = () => {
+            isPartyMode = !isPartyMode;
+            socket.emit('party:toggle', isPartyMode);
+            createPressEffect(event);
+        };
+
+        // === ОБНОВЛЕНИЕ СПИСКА ПОЛЬЗОВАТЕЛЕЙ ===
+        function updateUsersList(users) {
+            userList.innerHTML = '';
+            for (const id in users) {
+                const u = users[id];
+                const div = document.createElement('div');
+                div.className = 'user-item' + (id === socket.id ? ' active' : '');
+
+                const timeAgo = Math.floor((Date.now() - u.lastActive) / 1000);
+                const activityText = timeAgo < 60 ? 'только что' : `${Math.floor(timeAgo / 60)}м назад`;
+
+                div.innerHTML = `
+                    <div class="user-dot" style="background:${u.color}; animation: userPulse ${1 + Math.random() * 2}s infinite"></div>
+                    <div class="user-name">${u.name}</div>
+                    <div class="user-activity">${activityText}</div>
+                `;
+
+                if (id !== socket.id) {
+                    div.onclick = () => {
+                        currentPrivateTarget = id;
+                        switchChatTab('private', { stopPropagation: ()=>{} });
+                        document.getElementById('tabPrivate').click();
+                        chatMessages.innerHTML = '';
+                        showNotification(`💬 Чат с ${u.name}`);
+
+                        // Эффект
+                        div.style.animation = 'none';
+                        div.offsetHeight;
+                        div.style.animation = 'userPulse 1s';
+                    };
+                }
+                userList.appendChild(div);
+            }
+        }
+
+        // === УВЕДОМЛЕНИЯ ===
+        function showNotification(text) {
+            const n = document.createElement('div');
+            n.className = 'notification';
+            n.textContent = text;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 3000);
+        }
+
+        // === ЧАСТИЦЫ ===
+        function createParticle(isParty = false) {
+            const p = document.createElement('div');
+            p.className = 'particle' + (isParty ? ' party' : '');
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.background = `hsl(${Math.random() * 360}, 100%, 60%)`;
+            p.style.animationDuration = (1 + Math.random() * 3) + 's';
+            p.style.width = isParty ? (5 + Math.random() * 10) + 'px' : '4px';
+            p.style.height = isParty ? (5 + Math.random() * 10) + 'px' : '4px';
+            document.getElementById('particles').appendChild(p);
+            setTimeout(() => p.remove(), 5000);
+        }
+
+        // === ЭФФЕКТЫ ===
+        function triggerEffect(isResult = false) {
+            display.classList.remove('wobble');
+            void display.offsetWidth;
+            display.classList.add('wobble');
+
+            if (isResult && isPartyMode) {
+                // Дополнительное безумие при результате в режиме вечеринки
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => createParticle(true), i * 100);
+                }
+            }
+        }
+
+        // === ОСЦИЛЛОСКОП ===
+        function drawOscilloscope() {
+            if (!analyser) return;
+            requestAnimationFrame(drawOscilloscope);
+
+            const timeDataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(timeDataArray);
+
+            canvasCtx.fillStyle = 'rgba(0,0,0,0.4)';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+
+            canvasCtx.beginPath();
+            const sliceWidth = canvas.width / analyser.frequencyBinCount;
+            let x = 0;
+
+            for (let i = 0; i < analyser.frequencyBinCount; i++) {
+                const v = timeDataArray[i] / 128.0;
+                const y = (v * canvas.height) / 2;
+
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            canvasCtx.stroke();
+            hue = (hue + 1) % 360;
+        }
+
+        // === АНИМАЦИЯ ПУЛЬСАЦИИ ===
+        function animatePulse() {
+            if (!analyser) return;
+            requestAnimationFrame(animatePulse);
+
+            if (audio.paused) {
+                playerContainer.style.boxShadow = '0 15px 60px rgba(0,0,0,0.5)';
+                playerContainer.style.filter = 'none';
+                return;
+            }
+
+            analyser.getByteFrequencyData(dataArray);
+            const bass = dataArray.slice(0, 10).reduce((a,b) => a + b, 0) / 10;
+            const power = Math.max(0, bass - 150);
+
+            if (isPartyMode) {
+                playerContainer.style.boxShadow = `0 15px 60px rgba(0,0,0,0.5), 0 0 ${50+power}px hsl(${hue}, 100%, 50%)`;
+            } else {
+                playerContainer.style.boxShadow = `0 15px 60px rgba(0,0,0,0.5), 0 0 ${50+power}px rgba(74,144,226,0.5)`;
+            }
+
+            // Визуализация реверба
+            if (wetGain && wetGain.gain.value > 0.1) {
+                const reverbGlow = wetGain.gain.value * 50;
+                playerContainer.style.filter = `blur(${reverbGlow * 0.1}px)`;
+            } else {
+                playerContainer.style.filter = 'none';
+            }
+
+            document.querySelectorAll('input[type="range"]').forEach(s => s.classList.toggle('is-playing', power > 20));
+        }
+
+        // === ЗАПУСК ЧАСТИЦ ===
+        setInterval(() => {
+            if (isPartyMode) {
+                createParticle(true);
+            } else {
+                createParticle(false);
+            }
+        }, 200);
+
+        // === ДОПОЛНИТЕЛЬНОЕ БЕЗУМИЕ ===
+
+        // Случайные эффекты при клике на калькулятор
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (isPartyMode) {
+                    // Случайное вращение кнопки
+                    btn.style.transform = `rotate(${Math.random() * 20 - 10}deg) scale(1.2)`;
+                    setTimeout(() => btn.style.transform = '', 200);
+
+                    // Случайный цвет
+                    btn.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    setTimeout(() => btn.style.background = '', 300);
+                }
+            });
+        });
+
+        // Эффект при наведении на дисплей
+        display.addEventListener('mouseenter', () => {
+            if (isPartyMode) {
+                display.style.transform = 'scale(1.05)';
+                display.style.textShadow = `0 0 20px hsl(${Math.random() * 360}, 100%, 70%)`;
+            }
+        });
+
+        display.addEventListener('mouseleave', () => {
+            display.style.transform = '';
+            display.style.textShadow = '';
+        });
+
+        console.log('🔥 БЕЗУМНЫЙ МУЛЬТИПЛЕЕР С РЕВЕРБОМ ЗАПУЩЕН!');
+    </script>
+</body>
+</html>
